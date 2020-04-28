@@ -1,5 +1,6 @@
 from PIL import Image
 
+
 def preview(img, size=200):
     """
     Preview an image as a thumbnail
