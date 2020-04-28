@@ -12,8 +12,10 @@
 pickle/
 **/*.tf
 **/train-output/
+*.tfrecord
 
 # GCP credentials
+credentials/
 */credentials/
 
 # Other
