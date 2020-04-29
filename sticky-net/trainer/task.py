@@ -56,10 +56,14 @@ def get_args():
         type = int
     )
 
-    # Checkpoints
+    # Paths
     parser.add_argument(
         '--job-dir',
         help = 'GCS location to write logs and checkpoint model weights',
+    )
+    parser.add_argument(
+        '--data_dir',
+        help = 'GCS location to fetch data from',
     )
     parser.add_argument(
         '--checkpoint_epochs',
@@ -79,4 +83,3 @@ if __name__ == '__main__':
     args = get_args()
     # Run the training job
     model.train_and_evaluate(args)
-   
