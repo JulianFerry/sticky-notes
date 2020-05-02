@@ -1,8 +1,8 @@
 # Tensorflow
 import tensorflow as tf
 from tensorflow.keras.applications.vgg16 import VGG16, preprocess_input
-from tensorflow.keras.models import Sequential, Model
-from tensorflow.keras.layers import Input, Dense, Flatten, Conv2D, Dropout, MaxPool2D, Activation
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input, Dense, Flatten
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint
@@ -14,13 +14,11 @@ import os
 import json
 from google.cloud import storage
 
-
 # Add before any TF calls - initializes the keras global outside of any tf.functions
 temp = tf.zeros([4, 32, 32, 3])
 preprocess_input(temp)
+
 AUTOTUNE = tf.data.experimental.AUTOTUNE
-# strategy = tf.distribute.MirroredStrategy()
-# print('Number of devices: {}'.format(strategy.num_replicas_in_sync))
 
 
 def load_metadata(tfrecord_path):
@@ -48,9 +46,9 @@ def parse_image(tfrecord, tfrecord_feature_description, image_shape):
     Parse image, label and bounding box from a tfrecord example
 
     Arguments:
-    - tfrecord - tf.data.TFRecordDataset - loaded tfrecord dataset containing training examples
-    - tfrecord_feature_description - dict - dict mapping used to parse tf.Example features
-    - image_shape - tuple - should be parsed from the METADATA file, with format (height, width, channels)
+        tfrecord - tf.data.TFRecordDataset - loaded tfrecord dataset containing training examples
+        tfrecord_feature_description - dict - dict mapping used to parse tf.Example features
+        image_shape - tuple (height, width, channels) - parse this from the METADATA file
     """
     # Parse single example
     tf_example = tf.io.parse_single_example(tfrecord, tfrecord_feature_description)
@@ -61,7 +59,7 @@ def parse_image(tfrecord, tfrecord_feature_description, image_shape):
     # Decode label
     label = tf_example['label']
     label = (label == 'stickie')
-    #bbox = tf_example['bbox']
+    # bbox = tf_example['bbox']
     return image, label
 
 
@@ -128,7 +126,7 @@ class HparamsMetricCallback(tf.keras.callbacks.Callback):
         Arguments:
         - metric - str - validation metric (should correspond to a metric used in `model.compile`)
         - log_dir - str - log directory to store the metric (should be same dir as Tensorboard)
-        
+
         Example:
         ```
         model.compile(..., metrics=['accuracy'])
@@ -170,12 +168,15 @@ def create_hparams_callbacks(log_dir, opt_metric, hparams, args):
     return hparams_metric_cb, hparams_cb
 
 
-def create_model(args, metrics):
+def create_model(args, metrics, **kwargs):
     """
     Create trainable model initialised from VGG-16 pretrained on ImageNet
     """
     # Pre-trained model
-    vgg = VGG16(weights='imagenet', input_tensor=Input(shape=(224, 224, 3)), include_top=False)
+    if args['initial_weights_path'] is None:
+        vgg = VGG16(weights='imagenet', input_tensor=Input(shape=(224, 224, 3)), include_top=False)
+    else:
+        vgg = VGG16(weights=None, input_tensor=Input(shape=(224, 224, 3)), include_top=False)
     vgg.trainable = False
     for layer in vgg.layers:
         layer.trainable = False
@@ -186,6 +187,45 @@ def create_model(args, metrics):
     output = vgg.layers[-1].output
     output = output_layer(flatten_layer(output))
     model = Model(vgg.input, output)
+
+    # Load weights (from gcloud or local storage)
+    weights_path = args['initial_weights_path']
+    if weights_path is not None:
+        print('Initialising model with weights from:', weights_path)
+        model.load_weights(weights_path)
+    
+    # Compile
+    model.compile(
+        loss="binary_crossentropy",
+        optimizer=Adam(learning_rate=args['learning_rate']),
+        metrics=metrics
+    )
+
+    return modeldef create_model(args, metrics, **kwargs):
+    """
+    Create trainable model initialised from VGG-16 pretrained on ImageNet
+    """
+    # Pre-trained model
+    if args['initial_weights_path'] is None:
+        vgg = VGG16(weights='imagenet', input_tensor=Input(shape=(224, 224, 3)), include_top=False)
+    else:
+        vgg = VGG16(weights=None, input_tensor=Input(shape=(224, 224, 3)), include_top=False)
+    vgg.trainable = False
+    for layer in vgg.layers:
+        layer.trainable = False
+
+    # Add trainable output layer
+    flatten_layer = Flatten()
+    output_layer = Dense(1, activation='sigmoid', kernel_regularizer=l2(l=args['l2_regularisation']))
+    output = vgg.layers[-1].output
+    output = output_layer(flatten_layer(output))
+    model = Model(vgg.input, output)
+
+    # Load weights (from gcloud or local storage)
+    weights_path = args['initial_weights_path']
+    if weights_path is not None:
+        print('Initialising model with weights from:', weights_path)
+        model.load_weights(weights_path)
 
     # Compile
     model.compile(

@@ -1,0 +1,18 @@
+trainingInput:
+  scaleTier: BASIC_GPU
+  hyperparameters:
+    algorithm: GRID_SEARCH
+    goal: MAXIMIZE
+    maxTrials: 2
+    maxParallelTrials: 1
+    hyperparameterMetricTag: val_accuracy
+    params:
+    - parameterName: learning_rate
+      type: DISCRETE
+      discreteValues:
+      - 0.001
+    - parameterName: l2_regularisation
+      type: DISCRETE
+      discreteValues:
+      - 0.001
+      - 0.01

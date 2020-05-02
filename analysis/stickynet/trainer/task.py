@@ -3,7 +3,9 @@ from . import model
 
 
 def get_args():
-    """Argument parser.
+    """
+    Argument parser
+
     Returns:
       Dictionary of arguments.
     """
@@ -64,6 +66,11 @@ def get_args():
     parser.add_argument(
         '--data_dir',
         help = 'GCS location to fetch data from',
+    )
+    parser.add_argument(
+        '--initial_weights_path',
+        help = 'Checkpointed model weights to load at the start of training',
+        default = None
     )
     parser.add_argument(
         '--checkpoint_epochs',
