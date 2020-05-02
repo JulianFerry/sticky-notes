@@ -63,7 +63,7 @@ def parse_image(tfrecord, tfrecord_feature_description, image_shape):
     return image, label
 
 
-def read_dataset(tfrecord_path, batch_size=32):
+def read_dataset(tfrecord_path, batch_size=32, repeat=None):
     """
     Read tfrecord dataset of images, labels and bounding boxes from storage
     """
@@ -93,7 +93,7 @@ def read_dataset(tfrecord_path, batch_size=32):
         num_parallel_calls=AUTOTUNE
     )
     # Repeat, shuffle, batch and prefetch
-    dataset = dataset.repeat(None).shuffle(num_examples).batch(batch_size).prefetch(AUTOTUNE)
+    dataset = dataset.repeat(repeat).shuffle(num_examples).batch(batch_size).prefetch(AUTOTUNE)
 
     return dataset, num_steps
 
@@ -168,40 +168,7 @@ def create_hparams_callbacks(log_dir, opt_metric, hparams, args):
     return hparams_metric_cb, hparams_cb
 
 
-def create_model(args, metrics, **kwargs):
-    """
-    Create trainable model initialised from VGG-16 pretrained on ImageNet
-    """
-    # Pre-trained model
-    if args['initial_weights_path'] is None:
-        vgg = VGG16(weights='imagenet', input_tensor=Input(shape=(224, 224, 3)), include_top=False)
-    else:
-        vgg = VGG16(weights=None, input_tensor=Input(shape=(224, 224, 3)), include_top=False)
-    vgg.trainable = False
-    for layer in vgg.layers:
-        layer.trainable = False
-
-    # Add trainable output layer
-    flatten_layer = Flatten()
-    output_layer = Dense(1, activation='sigmoid', kernel_regularizer=l2(l=args['l2_regularisation']))
-    output = vgg.layers[-1].output
-    output = output_layer(flatten_layer(output))
-    model = Model(vgg.input, output)
-
-    # Load weights (from gcloud or local storage)
-    weights_path = args['initial_weights_path']
-    if weights_path is not None:
-        print('Initialising model with weights from:', weights_path)
-        model.load_weights(weights_path)
-    
-    # Compile
-    model.compile(
-        loss="binary_crossentropy",
-        optimizer=Adam(learning_rate=args['learning_rate']),
-        metrics=metrics
-    )
-
-    return modeldef create_model(args, metrics, **kwargs):
+def create_model(args, metrics):
     """
     Create trainable model initialised from VGG-16 pretrained on ImageNet
     """
