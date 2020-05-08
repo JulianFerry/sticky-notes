@@ -1,6 +1,8 @@
 # User
 # ----
 
+.git.bfg-report/                                                  
+
 # Ignore data/ files and folders recursively
 # Exclude subfolders from the ignore rules
 # Now we can whitelist .gitkeep in those subfolders
