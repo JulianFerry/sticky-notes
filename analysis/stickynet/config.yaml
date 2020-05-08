@@ -3,16 +3,27 @@ trainingInput:
   hyperparameters:
     algorithm: GRID_SEARCH
     goal: MAXIMIZE
-    maxTrials: 2
+    maxTrials: 1
     maxParallelTrials: 1
     hyperparameterMetricTag: val_accuracy
     params:
     - parameterName: learning_rate
       type: DISCRETE
       discreteValues:
-      - 0.001
+      - 0.0001
+      #- 0.001
     - parameterName: l2_regularisation
       type: DISCRETE
       discreteValues:
       - 0.001
-      - 0.01
+      #- 0.01
+    - parameterName: dropout_rate
+      type: DISCRETE
+      discreteValues:
+      #- 0
+      - 0.5
+    - parameterName: trainable_blocks
+      type: DISCRETE
+      discreteValues:
+      #- 0
+      - 1

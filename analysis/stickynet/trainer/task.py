@@ -25,6 +25,7 @@ def get_args():
         type = int,
         default = 32
     )
+    # Hyperparameters
     parser.add_argument(
         '--learning_rate',
         help = 'Learning rate to use for optimization',
@@ -36,6 +37,32 @@ def get_args():
         help = 'Regularisation rate to use for dense layers',
         type = float,
         default = 0.01
+    )
+    parser.add_argument(
+        '--dropout_rate',
+        help = 'Dropout rate to use for dense layers',
+        type = float,
+        default = 0
+    )
+    parser.add_argument(
+        '--trainable_blocks',
+        help = 'Number of VGG convolutional blocks to train at the top of the network',
+        type = int,
+        default = 0
+    )
+
+    # Checkpoint arguments
+    parser.add_argument(
+        '--checkpoint_epochs',
+        help = 'Create a checkpoint every n epochs',
+        default = 1,
+        type = int
+    )
+    parser.add_argument(
+        '--first_epoch',
+        help = 'Epoch at which to start counting for training logs',
+        default = 0,
+        type = int
     )
 
     # Eval arguments
@@ -71,12 +98,6 @@ def get_args():
         '--initial_weights_path',
         help = 'Checkpointed model weights to load at the start of training',
         default = None
-    )
-    parser.add_argument(
-        '--checkpoint_epochs',
-        help = 'Create a checkpoint every n epochs',
-        default = 1,
-        type = int
     )
 
     # Parse
