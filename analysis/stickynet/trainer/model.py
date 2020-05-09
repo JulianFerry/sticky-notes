@@ -56,13 +56,12 @@ def parse_image(tfrecord, tfrecord_feature_description, image_shape):
     # Parse single example
     tf_example = tf.io.parse_single_example(tfrecord, tfrecord_feature_description)
     # Decode and preprocess image
-    image = tf.io.decode_raw(tf_example['image_raw'], tf.uint8)
+    image = tf.io.decode_raw(tf_example['image/encoded'], tf.uint8)
     image = tf.reshape(image, image_shape)
     image = preprocess_input(image)
     # Decode label
-    label = tf_example['label']
+    label = tf_example['image/object/class/text']
     label = (label == 'stickie')
-    # bbox = tf_example['bbox']
     return image, label
 
 
@@ -84,9 +83,8 @@ def read_dataset(tfrecord_path, batch_size=32, repeat=None, **kwargs):
         metadata['dimensions']['channels']
     )
     tfrecord_feature_description = {
-        'image_raw': tf.io.FixedLenFeature([], tf.string),
-        'label': tf.io.FixedLenFeature([], tf.string),
-        'bbox': tf.io.FixedLenFeature([], tf.string)
+        'image/encoded': tf.io.FixedLenFeature([], tf.string),
+        'image/object/class/text': tf.io.FixedLenFeature([], tf.string)
     }
 
     # Load and parse data
